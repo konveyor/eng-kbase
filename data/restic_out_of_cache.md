@@ -11,6 +11,11 @@ restic for PV migration was failing. The issue reported was very close to
 [this](https://github.com/restic/restic/issues/2244), the details of which
 are captured [here](https://bugzilla.redhat.com/show_bug.cgi?id=1960655).
 
+The cache that is being talked about in this issue is a memory reserved by
+the restic program when running the `restore` CLI command. More details
+[here](https://forum.restic.net/t/not-enough-cache-capacity-when-restoring-from-minio-s3/1588/2).
+The fix of this issue removes the cache altogether.
+
 Prior to restic v0.10.0, restic was using a restore mechanism where it
 needed to predict the cache size. The cache size was hard coded into the
 codebase around 5 MB [here](https://github.com/restic/restic/blob/ecc2458de8f94a2a0fe8300c74057ab77680d713/internal/restorer/filerestorer.go#L29-L34).
