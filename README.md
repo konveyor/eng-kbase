@@ -1,5 +1,7 @@
 # Konveyor Engineering Knowledgebase
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/4be93a33-6977-4964-ba22-fc1edf0c0fa6/deploy-status)](https://app.netlify.com/sites/konveyor-eng-kbase/deploys)
+
 This repo is a dedicated place for contributors to the Konveyor project to post
 general engineering related information of all kinds. This could be everything
 from technical deep dives to tips and tricks. All contributors welcome, please
