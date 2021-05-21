@@ -1,12 +1,18 @@
 ---
-title: "{{ replace .Name "-" " " | }}"
-date: {{ .Date }}
-draft: true
+title: "Copying Pvc Data Manually"
+date: 2021-05-21T13:43:26-04:00
+draft: false
+author: Pranav Gaikwad
+category: Crane
+tags:
+- crane
+- state migration
+- persistent volumes
+- PVs
+- rsync
 ---
 
-# Copying PVC data manually
-
-Sometimes there is a need top copy select files from one PVC to another. This 
+Sometimes there is a need top copy select files from one PVC to another. This
 post describes how to use rsync and a bastian host that has access to both
 PVCs (same cluster or different) to copy selected files.
 
@@ -46,7 +52,7 @@ On source namespace:
    EOF
     ```
    replace pvc-name with the pvc-name from step 2
-4. Confirm the volume mount by rshing into the pod and running df 
+4. Confirm the volume mount by rshing into the pod and running df
     ```bash
    $ oc rsh busybox-sleep
    sh-4.2# df -h
@@ -64,12 +70,12 @@ On source namespace:
    tmpfs                                 7.9G     0  7.9G   0% /sys/firmware
    sh-4.2#
     ```
-   
-   In this case the pvc name is pvc-0 and the mount path in the pod is 
+
+   In this case the pvc name is pvc-0 and the mount path in the pod is
    `/mnt/pvc-0`
 
 Repeat the above steps for destination PVC as well.
-   
+
 #### Coping the files
 
 Now assume you want to copy the following three files from the source PVC.
@@ -87,7 +93,7 @@ Use the following steps:
    sudo oc login <server> -u <user> -p <password>
    sudo oc project source-namespace
    for i in /mnt/pvc-0/10 /mnt/pvc-0/a/11 /mnt/pvc-0/a/51; do
-       sudo rsync --relative -a --progress --rsh='oc rsh' busybox-sleep:$i ./pvc-files/ 
+       sudo rsync --relative -a --progress --rsh='oc rsh' busybox-sleep:$i ./pvc-files/
    done
    ```
 3. Verify the file `ls -lR ./pvc-files` permissions
@@ -104,7 +110,7 @@ Use the following steps:
    if the for loop does not print anything all checksums are verified
 5. Copy all the files to destination PVC. We will have to change directory
    into the pvc-0 folder to maintain the directory structure.
-   ```bash 
+   ```bash
    sudo oc project destination-namespace
    cd pvc-files/mnt/pvc-0
    for i in 10 a/11 a/51; do
@@ -126,6 +132,6 @@ Use the following steps:
    ```
    If the above for-loop did not print anything all the files have been safely
    copied over to the destination
-   
 
-   
+
+
