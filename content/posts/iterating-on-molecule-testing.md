@@ -1,7 +1,14 @@
 ---
-title: "{{ replace .Name "-" " " | }}"
-date: {{ .Date }}
-draft: true
+title: "Iterating on Molecule Testing"
+date: 2021-05-21T11:06:28-04:00
+draft: false
+author: Shawn Hurley
+category: Testing
+tags:
+- testing
+- molecule
+- ansible-operator
+- ansible
 ---
 
 # Testing Molecule Test Code

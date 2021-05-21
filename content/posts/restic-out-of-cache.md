@@ -1,10 +1,15 @@
 ---
-title: "{{ replace .Name "-" " " | }}"
-date: {{ .Date }}
-draft: true
+title: "Restic Out of Cache"
+date: 2021-05-21T13:49:54-04:00
+draft: false
+author: Alay Patel
+category: Crane
+tags:
+- crane
+- velero
+- restic
+- troubleshooting
 ---
-
-# Cache problems with older restic
 
 Recently the engineering team was engaged in a customer issue where using
 restic for PV migration was failing. The issue reported was very close to
