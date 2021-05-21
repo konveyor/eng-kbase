@@ -3,7 +3,6 @@ title: "Copying Pvc Data Manually"
 date: 2021-05-21T13:43:26-04:00
 draft: false
 author: Pranav Gaikwad
-category: Crane
 tags:
 - crane
 - state migration
