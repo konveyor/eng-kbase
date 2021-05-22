@@ -17,10 +17,18 @@ Be sure to include hyphens in your file name as we have templates set up that
 will follow these conventions. You should automatically get the time string
 included in your post.
 
-### Categorizing and Tagging
+### Metadata
 
-Be sure to add your `category` and `tags` to your post metadata so that it can
-be discovered by folks who are browsing the knowledgebase.
+We heavily rely on the metadata, or "front matter" for each post to organize
+content so it is browseable and searchable. Two items of importance for each
+post are ensuring you have updated the `authors` values in the head section
+(NOTE: this is a set of authors, even if there is only one). Secondly, ensure
+you add relevant `tags`, and take a look at already existing tags to see if there
+are already any in use that would make sense for you to add to your post.
+
+When you use the above "writing a new post" command to start, that should
+prefill some values based on the default archetype template. Just delete and
+fill in as you see fit.
 
 ## Updating the theme
 
