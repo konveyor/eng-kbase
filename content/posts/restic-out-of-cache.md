@@ -2,7 +2,8 @@
 title: "Restic Out of Cache"
 date: 2021-05-21T13:49:54-04:00
 draft: false
-author: Alay Patel
+authors:
+- Alay Patel
 tags:
 - crane
 - velero

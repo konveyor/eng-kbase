@@ -2,7 +2,8 @@
 title: "Iterating on Molecule Testing"
 date: 2021-05-21T11:06:28-04:00
 draft: false
-author: Shawn Hurley
+authors:
+- Shawn Hurley
 tags:
 - testing
 - molecule
