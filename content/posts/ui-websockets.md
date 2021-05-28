@@ -12,7 +12,11 @@ tags:
   - javascript
 ---
 
-When creating a web client to consume a k8s api, you will need to make a decision on how to go about rapidly querying for changes.
+When creating a web client to consume a k8s api, you will need to make a decision on how to go about rapidly querying for changes. Some benefits of using websockets include:
+
+- Bypassing cors by making http requests from the server side. Any response you get back can be filtered and passed through to the client side for consumption.
+- Reduce expensive overhead of long polling using HTTP
+- No additional configuration required on cluster since the websocket port uses the same port as the HTTP server used to serve the express app.
 
 #### Setup websocket server
 
@@ -20,7 +24,7 @@ To establish a websocket connection, a "handshake" between client and server is 
 
 Node server setup:
 
-1. Setup an express server in the node app entry point.
+1. Setup an express server in the node app entrypoint.
 2. Once the express server is configured, you can pass the express server instance to the webpack configuration. This allows both the express server & the websocket to share the same port.
 3. Create the websocket configuration function & run it from within the node entrypoint.
 
@@ -182,12 +186,12 @@ Within your existing react app, you can create a reusable hook to manage your we
          sendJsonMessage(msg);
        }
      }, [connectionStatus]);
-     /** Render the last JSON message received from the server  **/
+     /** Render the last JSON message received from the server. The information received from websockets would preferably have its own redux middleware & state handling logic that exists outside of the presentation layer where we can have greater control over error handling, connection handling, filtering and storing of data. Integration with redux & redux saga would be a potential solution. Using event channels with redux-saga would allow for processing of each websocket message synchronously.     **/
      return (
        <div>
          <div>The WebSocket is currently {connectionStatus}</div>
          {lastJsonMessage ? (
-           <span>Last message: {lastJsonMessage?.data?.kind}</span>
+           <span>Last message: {lastJsonMessage?.data?.items}</span>
          ) : null}
          <ul></ul>
        </div>
