@@ -1,12 +1,11 @@
 ---
 title: "UI Websockets"
-date: 2021-05-21T13:43:26-04:00
+date: 2021-05-28T13:25:00
 draft: false
 authors:
   - Ian Bolton
 tags:
   - crane
-  - state migration
   - websockets
   - react
   - k8s
@@ -23,7 +22,7 @@ Node server setup:
 
 1. Setup an express server in the node app entry point.
 2. Once the express server is configured, you can pass the express server instance to the webpack configuration. This allows both the express server & the websocket to share the same port.
-3. Create the websocket configuration function & run it from the node endpoint.
+3. Create the websocket configuration function & run it from within the node entrypoint.
 
    setupWebSocket.js - websocket configuration file
 
@@ -131,60 +130,67 @@ Node server setup:
 
 #### Setup websocket client
 
-Now assume you want to copy the following three files from the source PVC.
+Once you have the websocket server configured, it is time to configure the client.
 
-```
-/mnt/pvc-0/10
-/mnt/pvc-0/a/11
-/mnt/pvc-0/a/51
-```
+Within your existing react app, you can create a reusable hook to manage your websocket events. For demontstration purposes, I am using the library 'react-use-websocket' to handle connecting, reconnecting on unexpected disconnection, and sending/receiving messages.
 
-Use the following steps:
+1. Create a component that needs to communicate with your websocket server.
 
-1. On your local machine, create a temperory directory to store these files
-   `mkdir ./pvc-files`
-2. Use the following loop to copy the files over
-   ```bash
-   sudo oc login <server> -u <user> -p <password>
-   sudo oc project source-namespace
-   for i in /mnt/pvc-0/10 /mnt/pvc-0/a/11 /mnt/pvc-0/a/51; do
-       sudo rsync --relative -a --progress --rsh='oc rsh' busybox-sleep:$i ./pvc-files/
-   done
-   ```
-3. Verify the file `ls -lR ./pvc-files` permissions
-4. Verify the files checksum
-   ```
-    for i in /mnt/pvc-0/10 /mnt/pvc-0/a/11 /mnt/pvc-0/a/51; do
-           pod_checksum=$(oc exec busybox-sleep -- md5sum "$i" | awk '{printf $1}');
-           local_checksum=$(sudo md5sum "/tmp/pvc-files$i" | awk '{printf $1}');
-           if [[ $pod_checksum != $local_checksum ]]; then
-                  echo "checksum for $i is not equal $pod_checksum $local_checksum"
-           fi
-    done
-   ```
-   if the for loop does not print anything all checksums are verified
-5. Copy all the files to destination PVC. We will have to change directory
-   into the pvc-0 folder to maintain the directory structure.
+   ```jsx
+   import React, { useState, useEffect } from "react";
+   import useWebSocket, { ReadyState } from "react-use-websocket";
 
-   ```bash
-   sudo oc project destination-namespace
-   cd pvc-files/mnt/pvc-0
-   for i in 10 a/11 a/51; do
-      sudo rsync -a --progress --relative --rsh='oc rsh' $i busybox-sleep:/mnt/pvc-0/  ;    done
-   done
-   ```
+   export const WebSocketDemo = () => {
+     const [socketUrl, setSocketUrl] = useState(
+       `ws://127.0.0.1:${process.env.PORT || 9001}`
+     );
+     const messageHistory = useRef([]);
+     const {
+       sendMessage,
+       sendJsonMessage,
+       lastMessage,
+       lastJsonMessage,
+       readyState,
+       getWebSocket,
+     } = useWebSocket(socketUrl, {
+       onOpen: () => console.log("opened"),
+       //Will attempt to reconnect on all close events, such as server shutting down
+       shouldReconnect: (closeEvent) => true,
+     });
 
-6. Verify the checksum from local to destination
-   ```bash
-   cd ../..
-   oc project destination-namespace
-   for i in /mnt/pvc-0/10 /mnt/pvc-0/a/11 /mnt/pvc-0/a/51; do
-          pod_checksum=$(oc exec busybox-sleep -- md5sum "$i" | awk '{printf $1}');
-          local_checksum=$(sudo md5sum "/tmp/pvc-files$i" | awk '{printf $1}');
-          if [[ $pod_checksum != $local_checksum ]]; then
-                 echo "checksum for $i is not equal $pod_checksum $local_checksum"
-          fi
-   done
+     const connectionStatus = {
+       [ReadyState.CONNECTING]: "Connecting",
+       [ReadyState.OPEN]: "Open",
+       [ReadyState.CLOSING]: "Closing",
+       [ReadyState.CLOSED]: "Closed",
+       [ReadyState.UNINSTANTIATED]: "Uninstantiated",
+     }[readyState];
+
+     useEffect(() => {
+       /** Grab the currentUser from localstorage to pass along with the websocket method for server side http authentication **/
+       const LS_KEY_CURRENT_USER = "currentUser";
+       const currentUser = JSON.parse(
+         localStorage.getItem(LS_KEY_CURRENT_USER)
+       );
+       /** create a JSON message to send with the token & request type. The node server will use this to determine what type of http call to make **/
+       const msg = {
+         type: "GET_EVENTS",
+         token: currentUser,
+       };
+       if (connectionStatus === "Open") {
+         /** send the message to the open websocket. **/
+         sendJsonMessage(msg);
+       }
+     }, [connectionStatus]);
+     /** Render the last JSON message received from the server  **/
+     return (
+       <div>
+         <div>The WebSocket is currently {connectionStatus}</div>
+         {lastJsonMessage ? (
+           <span>Last message: {lastJsonMessage?.data?.kind}</span>
+         ) : null}
+         <ul></ul>
+       </div>
+     );
+   };
    ```
-   If the above for-loop did not print anything all the files have been safely
-   copied over to the destination
