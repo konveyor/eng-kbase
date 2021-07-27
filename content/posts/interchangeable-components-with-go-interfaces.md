@@ -21,7 +21,7 @@ We also witnessed at least one case where data had become damaged on the backing
 
 Furthermore, as of right now we also only support transfers wrapped in stunnel and exposed over routes. Using routes elliminates the ability to work with Kubernetes clusters, another capability we would like to add in the future. Mixing and matching transfer protocols, transports, and endpoint types would quickly become a convoluted tangle of code if we didn't do something else.
 
-## The solution.
+## The Solution
 First, to deal with simplifying controller code we decided to move most of the logic for data migrations into a new library, [crane-lib](https://github.com/konveyor/crane-lib).
 
 Next, when sitting down to think about the problem we broke out the components we are using for direct volume migrations today. Those are rsync, stunnel, and routes. Each of these has served us well, but also potentially has limitations. It would be nice if we could swap each out for another option as neeed. To do this we labeled each of these layers. rsync was is the transfer program. stunnel is the transport wrapper, and created an interface for each of these layers.
@@ -92,8 +92,8 @@ As we look forward to crane 2.0 more endpoint options such as nodeport, and even
 We would also welcome contributions improving or adding options to facilitate transfer within or between clusters.
 
 ## Links
-[Konveyor Crane](https://www.konveyor.io/crane)
-[crane-lib](https://github.com/konveyor/crane-lib)
-[cran-lib example test](https://github.com/konveyor/crane-lib/blob/main/state_transfer/example_test.go)
-[crane 2.0](https://github.com/konveyor/crane)
+[Konveyor Crane](https://www.konveyor.io/crane)  
+[crane-lib](https://github.com/konveyor/crane-lib)  
+[cran-lib example test](https://github.com/konveyor/crane-lib/blob/main/state_transfer/example_test.go)  
+[crane 2.0](https://github.com/konveyor/crane)  
 [Go by Example: Interfaces](https://gobyexample.com/interfaces)
