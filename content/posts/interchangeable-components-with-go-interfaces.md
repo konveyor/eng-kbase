@@ -12,7 +12,7 @@ tags:
 ---
 
 ## Introduction
-When MTC was initially released (as CAM) we supported only restic for PV migrations. As we tested ourselves and through the QE process this worked well for us and we felt it filled our needs so we released with just that option.
+The MTC codebase has grown over the years to add in support for multiple methods of PV migration. As we added in the additional methods the code grew in complexity.  We recently addressed this complexity by refactoring to create Go Interfaces to obtain interchangeable components. This pattern has worked well for the development team and we'd like to describe more of the thinking process and steps we took to arrive at this implementation in this post.
 
 ## The problems
 Restic requires first backing up data to object storage like s3. This incurs an additional cost since everything must first be uploaded from the source and then downloaded to the destination. This can have benefits, especially in environments with restricted networking where the clusters cannot communicate with each other. Conversely downtime is often limited and lengthy migrations can be a huge burden. A direct migration with rsync might provide a large performance improvement. 
