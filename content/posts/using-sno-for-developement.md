@@ -1,4 +1,14 @@
-# Using Single Node OpenShift for development
+---
+title: "Using Single Node OpenShift for Development"
+date: 2021-11-03T10:38:38-04:00
+draft: false
+authors:
+- Jason Montleon
+tags:
+- openshift
+- sno
+- single-node
+---
 
 ## Introduction
 Single Node OpenShift is a new offering that also works great for development, although it does require some planning and preparation before using it for the first time. You will need to provide 8 vCPU, 32GB of RAM, and 120GB of storage at a minimum.  
