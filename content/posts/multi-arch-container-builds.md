@@ -101,86 +101,71 @@ jobs:
 ## Travis
 Travis is also capable of performing builds for multiple architectures.  
   
-Create a `.travis.yml` as well as image build and manifest push scripts in place of the GitHub Action.  
+Create a `.travis.yml` and update the `IMAGE`, `DEFAULT_BRANCH`, and `DOCKERFILE` env vars as required in `.travis.yml`.  
   
-Update the `IMAGE`, `DEFAULT_BRANCH`, and `DOCKERFILE` env vars as required in `.travis.yml`.  
+One thing to be aware of is that Travis times out a job if it does not detect output for 10 minutes. At the same time alternative architectures are mostly limited to using LXD, which buffers output. If enough output is not generated to cause the buffer to be written to the console and the build takes more than 10 minutes it will result in the job being canceled. For this reason we are adding `-v` to go commands which adds a lot of verbosity and keeps the console receiving data in short intervals to keep the job running.  
+  
+In the example below we are using the `before_install` section to make modifications to the `Dockerfile` to do dep downloads from outside the container and copy them in since we have also seen intermittent problems within docker containers in Travis on alternate architectures .  
   
 .travis.yml:
 ```
-language: bash
 os: linux
 services: docker
-sudo: required
-dist: bionic
+dist: focal
+language: go
+go: stable
 
 env:
   global:
-    IMAGE: quay.io/jmontleon/travis-multiarch-test
-    DEFAULT_BRANCH: main
-    DOCKERFILE: Dockerfile
+  - IMAGE: quay.io/jmontleon/travis-multiarch-test
+  - DEFAULT_BRANCH: main
+  - DOCKERFILE: Dockerfile
+  - DOCKER_CLI_EXPERIMENTAL: enabled
+  - GOPROXY: https://goproxy.io,direct
+
+before_install:
+- |
+  if [ "${TRAVIS_BRANCH}" == "${DEFAULT_BRANCH}" ]; then
+    export TAG=latest
+  else
+    export TAG="${TRAVIS_BRANCH}"
+  fi
+
+# Builds routinely fail due to download failures inside alternate arch docker containers
+# Here we are downloading outside the docker container and copying the deps in
+# Also use -v for downloads/builds to stop no output failures from lxd env buffering.
+before_script:
+- go mod vendor -v
+- sed -i 's|^RUN go mod download$|COPY vendor/ vendor/|g' ${DOCKERFILE}
+- sed -i 's|-mod=mod|-mod=vendor|g' ${DOCKERFILE}
+- sed -i 's|go build|go build -v|g' ${DOCKERFILE}
+
+script:
+- docker build -t ${IMAGE}:${TAG}-${TRAVIS_ARCH} -f ${DOCKERFILE} .
+- if [ -n "${QUAY_ROBOT}" ]; then docker login quay.io -u "${QUAY_ROBOT}" -p ${QUAY_TOKEN}; fi
+- if [ -n "${QUAY_ROBOT}" ]; then docker push ${IMAGE}:${TAG}-${TRAVIS_ARCH}; fi
+
 jobs:
   include:
-   - stage: build image
-     arch: ppc64le
-     script: ./.travis-build-image.sh
-   - arch: amd64
-     script: ./.travis-build-image.sh
-   - arch: s390x
-     script: ./.travis-build-image.sh
-   - arch: arm64
-     script: ./.travis-build-image.sh
-   - stage: push manifest
-     arch: x86_64
-     script: ./.travis-push-manifest.sh
-```
-
-.travis-build-image.sh
-```
-#!/bin/bash
-
-if [ "${TRAVIS_BRANCH}" == "${DEFAULT_BRANCH}" ]; then
-  export TAG=latest
-else
-  export TAG=${TRAVIS_BRANCH}
-fi
-
-export ARCH=$(uname -m)
-
-docker build -t ${IMAGE}:${TAG}-${ARCH} -f ${DOCKERFILE} .
-docker login quay.io -u "${QUAY_ROBOT}" -p ${QUAY_TOKEN}
-docker push ${IMAGE}:${TAG}-${ARCH}
-```
-
-.travis-push-manifest.sh
-```
-#!/bin/bash
-
-if [ "${TRAVIS_BRANCH}" == "${DEFAULT_BRANCH}" ]; then
-  export TAG=latest
-else
-  export TAG=${TRAVIS_BRANCH}
-fi
-
-export DOCKER_CLI_EXPERIMENTAL=enabled
-
-#Without this docker manifest create fails
-#https://github.com/docker/for-linux/issues/396
-sudo chmod o+x /etc/docker
-
-docker manifest create \
-  ${IMAGE}:${TAG} \
-  ${IMAGE}:${TAG}-x86_64 \
-  ${IMAGE}:${TAG}-ppc64le \
-  ${IMAGE}:${TAG}-s390x \
-  ${IMAGE}:${TAG}-aarch64
-echo $?
-
-docker manifest inspect ${IMAGE}:${TAG}
-echo $?
-
-docker login quay.io -u "${QUAY_ROBOT}" -p ${QUAY_TOKEN}
-
-docker manifest push ${IMAGE}:${TAG}
+  - stage: build images
+    arch: ppc64le
+  - arch: s390x
+  - arch: arm64
+  - arch: amd64
+  - stage: push manifest
+    language: shell
+    arch: amd64
+    before_script: []
+    script:
+    - if [ -n "${QUAY_ROBOT}" ]; then docker login quay.io -u "${QUAY_ROBOT}" -p ${QUAY_TOKEN}; fi
+    - |
+      docker manifest create \
+       ${IMAGE}:${TAG} \
+       ${IMAGE}:${TAG}-x86_64 \
+       ${IMAGE}:${TAG}-ppc64le \
+       ${IMAGE}:${TAG}-s390x \
+       ${IMAGE}:${TAG}-aarch64
+    - if [ -n "${QUAY_ROBOT}" ]; then docker manifest push ${IMAGE}:${TAG}; fi
 ```
 
 ## References
