@@ -101,7 +101,7 @@ jobs:
 ## Travis
 Travis is also capable of performing builds for multiple architectures.  
   
-Create a `.travis.yml` and update the `IMAGE`, `DEFAULT_BRANCH`, and `DOCKERFILE` env vars as required in `.travis.yml`.  
+Create a `.travis.yml` and update the `IMAGE`, `DEFAULT_BRANCH`, and `DOCKERFILE` env vars as required in `.travis.yml`. You will also want to add `QUAY_ROBOT` and `QUAY_TOKEN` secrets in your Travis settings for the repo and set appropriate credential values for pushing the images.   
   
 One thing to be aware of is that Travis times out a job if it does not detect output for 10 minutes. At the same time alternative architectures are mostly limited to using LXD, which buffers output. If enough output is not generated to cause the buffer to be written to the console and the build takes more than 10 minutes it will result in the job being canceled. For this reason we are adding `-v` to go commands which adds a lot of verbosity and keeps the console receiving data in short intervals to keep the job running.  
   
