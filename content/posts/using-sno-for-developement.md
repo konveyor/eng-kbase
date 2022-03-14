@@ -174,6 +174,44 @@ volumeBindingMode: WaitForFirstConsumer
 EOF
 ```
 
+### LoadBalancer
+You may wish to work on services that require the creation of Load Balancers. One option is to install MetalLB from Operator Hub.  
+  
+To configure MetalLB you need to provide a range of addresses and create the controller, after which it will handle any LB requests.  
+  
+In this example I installed it in the metallb namespace. If you installed it in a different namespace adjust the resources below accordingly.
+
+### Provide MetalLB a range of addresses
+Adjust the IP address CIDR or Range and create the config configmap. For more information see the [documentation](https://metallb.universe.tf/configuration/#layer-2-configuration).
+
+```
+cat << EOF | oc create -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+  namespace: metallb
+data:
+  config: |
+    address-pools:
+    - protocol: layer2
+      name: default
+      addresses:
+      - 192.168.1.176/28
+EOF
+```
+
+### Create the MetalLB controller
+```
+cat << EOF | oc create -f -
+apiVersion: metallb.io/v1beta1
+kind: MetalLB
+metadata:
+  name: metallb
+  namespace: metallb
+EOF
+```
+
 ### Shutting down, Rebooting, and Upgrades
 Shutting down and rebooting your cluster should not present a problem.
 
