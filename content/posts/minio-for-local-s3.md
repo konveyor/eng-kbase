@@ -1,5 +1,5 @@
 ---
-title: "Minio for local S3 storage using podman"
+title: "Minio for local S3 storage using Podman or OpenShift"
 date: 2021-11-03T12:49:00-04:00
 draft: false
 authors:
@@ -10,7 +10,7 @@ tags:
 - podman
 ---
 
-# Minio for local S3 storage using podman
+# Minio for local S3 storage using Podman
 
 ## Introduction
 When using Single Node OpenShift and other options for local clusters it may be helpful to also have a local s3 instance.
@@ -223,3 +223,153 @@ podman run \
 You should now be able to connect to the Minio service and console using SSL.
 
 When dealing with a containers in a pod you manage them with `podman pod` commands. For example, `podman pod rm -f minio`.
+
+# Minio for local S3 storage using OpenShift
+
+## Introduction
+If you would like to create a minio instance directly within your cluster that is also an option. The setup here is similar to what was done with podman above, but instead of leveraging nginx to provide SSL we make use of services and routes to expose the service with SSL.
+
+Note that while there is a Minio Operator available in OpenShift's OperatorHub that can complete more advanced setups it currently makes use of v1beta1 CSRs and does not deploy properly on OpenShift 4.9+.
+
+## Setup
+Assuming the minio namespace is available the only thing you should need to change is the username and password for minio.
+```
+export MINIO_USERNAME=changeme
+export MINIO_PASSWORD=changeme
+cat << EOF | oc create -f -
+---
+apiVersion: project.openshift.io/v1
+kind: Project
+metadata:
+  name: minio
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio
+  namespace: minio
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: minio
+  name: minio
+  namespace: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  triggers:
+    - type: ConfigChange
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      containers:
+      - args:
+        - gateway
+        - nas
+        - /data
+        - --console-address
+        - :9001
+        env:
+          - name: MINIO_ROOT_USER
+            value: $MINIO_USERNAME
+          - name: MINIO_ROOT_PASSWORD
+            value: $MINIO_PASSWORD
+        image: docker.io/minio/minio:latest
+        name: minio
+        ports:
+        - containerPort: 9000
+          protocol: TCP
+        - containerPort: 9001
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /data
+          name: minio
+      volumes:
+        - name: minio
+          persistentVolumeClaim:
+            claimName: minio
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: minio
+  labels:
+    app: minio
+    service: minio
+spec:
+  selector:
+    app: minio
+  ports:
+    - protocol: TCP
+      port: 9000
+      targetPort: 9000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-console
+  namespace: minio
+  labels:
+    app: minio
+    service: minio-console
+spec:
+  selector:
+    app: minio
+  ports:
+    - protocol: TCP
+      port: 9001
+      targetPort: 9001
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: minio
+  namespace: minio
+  labels:
+    app: minio
+    service: minio
+spec:
+  to:
+    kind: Service
+    name: minio
+  port:
+    targetPort: 9000
+  tls:
+    termination:                   edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: minio-console
+  namespace: minio
+  labels:
+    app: minio
+    service: minio-console
+spec:
+  to:
+    kind: Service
+    name: minio-console
+  port:
+    targetPort: 9001
+  tls:
+    termination:                   edge
+    insecureEdgeTerminationPolicy: Redirect
+EOF
+```
