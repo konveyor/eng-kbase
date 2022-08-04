@@ -7,13 +7,12 @@ authors:
 tags:
 - velero, KRM functions, openshift velero plugins, velero controller
 ---
-
 ### KRM Functions
 The Kubernetes Resource Model (KRM) is a way to express the desired state that you want on your cluster. KRM functions small, interoperable, and language-independent executable programs packaged as containers that can be chained together as part of a configuration management pipeline. In a nutshell, they transform KRM resources in a predefined, holistic way.
 
 
 ### KRM Function Runner Library
-The library takes in an input a image or an executable and a function config and runs KRM functions on a particular resource list. 
+The library takes in an input a image or an executable and a function config and runs KRM functions on a particular resource list. The input to library is in form of a ResourceList and the output we receive is a ResourceList as well.
 
 ## Solution
 The solution of working this problem out was divided into two phases namely Feasibility Phase and Performance Improvement Phase.
@@ -72,10 +71,17 @@ The overall process can be demonstrated by the diagram below
 ### Performance improvement phase
 This Phase was development of a new plugin type BackupMultiItems and RestoreMultiItems to the Velero Plugins that will allow a plugin author to take in a list of resources, execute KRM functions, and return a list of items with translated data to be included in the backup. After adding a new plugin to accept a list of resources, modify the Velero Controller to pass in to this plugin type a list of resources so that we achieve performance enhancement by reducing the amount of plugin calls.
 
+### Demo
+The following demo shows an example of how to backup restore an application with the plugins modified to run KRM functions . The repositories and code which is modified is also highlighted in the demo.
+
+
 ### References
 [Openshift-Velero-Plugin-Changes](https://github.com/openshift/openshift-velero-plugin/pull/160 "Openshift-Velero-Plugin-Changes")
 [Velero Controller code](https://github.com/vmware-tanzu/velero "Velero Controller code")
 [KRM Plugin Functions Repository](https://github.com/chaitanyab2311/plugin-krm-functions "KRM Plugin Functions Repository")
+
+
+
 
 
 
