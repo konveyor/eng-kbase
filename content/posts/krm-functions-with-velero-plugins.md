@@ -12,7 +12,7 @@ The Kubernetes Resource Model (KRM) is a way to express the desired state that y
 
 
 ### KRM Function Runner Library
-The library takes in an input a image or an executable and a function config and runs KRM functions on a particular resource list. The input to library is in form of a ResourceList and the output we receive is a ResourceList as well.
+The library takes in an input a image or an executable and a function config and runs KRM functions on a particular resource list. The input to library is in form of a ResourceList and the output we receive is a ResourceList. This Resouce list can be further parsed to add some additional conditions to a particular parameter and return the output from plugin accordingly.
 
 ## Solution
 The solution of working this problem out was divided into two phases namely Feasibility Phase and Performance Improvement Phase.
@@ -68,16 +68,25 @@ After these changes there are some additional changes that are to be made in ope
 
 The overall process can be demonstrated by the diagram below
 
+![Run KRM functions from Velero Plugins](/krmfunctions-velero.png)
+
+
+The left part of the diagram shows modification of Velero pod docker file and addition of executables in the velero container. We make use of this new Velero pod for backup/restore.The right part shows Velero openshift plugins that make use of KRM function runner library and also plugin KRM functions repository for transformation of resources to complete the backup restore process. DPA(Data Protection Application) needs to be changed to use images for new Velero pod and also add overriden changes for Openshift Velero plugins container as well. 
+
 ### Performance improvement phase
 This Phase was development of a new plugin type BackupMultiItems and RestoreMultiItems to the Velero Plugins that will allow a plugin author to take in a list of resources, execute KRM functions, and return a list of items with translated data to be included in the backup. After adding a new plugin to accept a list of resources, modify the Velero Controller to pass in to this plugin type a list of resources so that we achieve performance enhancement by reducing the amount of plugin calls.
 
 ### Demo
-The following demo shows an example of how to backup restore an application with the plugins modified to run KRM functions . The repositories and code which is modified is also highlighted in the demo.
+The following demo shows an example of how to backup restore an application with the plugins modified to run KRM functions .The repositories and code which is modified is also highlighted in the demo video.
+
+[Demo video]("https://www.youtube.com/watch?v=kuDWpvoHvbo" "Demo video")
 
 
 ### References
 [Openshift-Velero-Plugin-Changes](https://github.com/openshift/openshift-velero-plugin/pull/160 "Openshift-Velero-Plugin-Changes")
+
 [Velero Controller code](https://github.com/vmware-tanzu/velero "Velero Controller code")
+
 [KRM Plugin Functions Repository](https://github.com/chaitanyab2311/plugin-krm-functions "KRM Plugin Functions Repository")
 
 
