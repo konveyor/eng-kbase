@@ -39,3 +39,6 @@ are a pain.
 `git clone https://github.com/adityatelange/hugo-PaperMod themes/PaperMod --depth=1`
 
 `rm -rf themes/PaperMod`, reclone to update, `rm -rf themes/PaperMod/.git`, commit and PR.
+
+## Code of Conduct
+Refer to Konveyor's Code of Conduct [here](https://github.com/konveyor/community/blob/main/CODE_OF_CONDUCT.md).
